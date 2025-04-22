@@ -5,6 +5,7 @@
 #include <sstream>
 #include <locale>
 #include <fstream>
+#include <windows.h>
 
 using namespace std;
 
@@ -12,7 +13,8 @@ struct Item {
     string descricao;
     double preco;
     int em_estoque;
-    int vendidos;
+    
+    Item() : descricao(""), preco(0.0), em_estoque(0) {}
 };
 
 vector<Item> itens;
@@ -51,7 +53,6 @@ void carregarDados() {
         
         arquivo.read(reinterpret_cast<char*>(&itens[i].preco), sizeof(itens[i].preco));
         arquivo.read(reinterpret_cast<char*>(&itens[i].em_estoque), sizeof(itens[i].em_estoque));
-        arquivo.read(reinterpret_cast<char*>(&itens[i].vendidos), sizeof(itens[i].vendidos));
     }
     
     cout << "Inventário carregado com " << itens.size() << " itens.\n";
@@ -74,7 +75,6 @@ void salvarDados() {
         arquivo.write(itens[i].descricao.c_str(), desc_tamanho);
         arquivo.write(reinterpret_cast<const char*>(&itens[i].preco), sizeof(itens[i].preco));
         arquivo.write(reinterpret_cast<const char*>(&itens[i].em_estoque), sizeof(itens[i].em_estoque));
-        arquivo.write(reinterpret_cast<const char*>(&itens[i].vendidos), sizeof(itens[i].vendidos));
     }
     
     cout << "Dados salvos com sucesso!\n";
@@ -82,9 +82,8 @@ void salvarDados() {
 
 void inicializarInventario() {
     itens.clear();
-    
     salvarDados();
-    cout << "Inventário inicializado com 20 itens padrão.\n";
+    cout << "Inventário inicializado com 0 itens padrão.\n";
 }
 
 void resetarInventario() {
@@ -104,17 +103,17 @@ void resetarInventario() {
 
 void mostrarInventario() {
     cout << "\nINVENTÁRIO ATUAL:\n";
-    cout << "-------------------------------------------\n";
+    cout << "------------------------------------------\n";
     cout << "ID | DESCRICAO         | PRECO   | ESTOQUE \n";
-    cout << "-------------------------------------------\n";
+    cout << "------------------------------------------\n";
     
     for(size_t i = 0; i < itens.size(); i++) {
         cout << setw(2) << i+1 << " | " 
              << setw(16) << left << itens[i].descricao << " | "
              << setw(6) << right << fixed << setprecision(2) << itens[i].preco << " | "
              << setw(7) << itens[i].em_estoque << " | "
-    		 << "\n";
-	}
+             << "\n";
+    }
 }
 
 void editarItem() {
@@ -134,7 +133,7 @@ void editarItem() {
     cout << "1. Descrição: " << item.descricao << "\n";
     cout << "2. Preço: R$ " << item.preco << "\n";
     cout << "3. Estoque: " << item.em_estoque << "\n";
-    cout << "\n";
+    cout << "4. Registrar venda\n";
     cout << "O que deseja alterar? ";
     
     int opcao;
@@ -157,26 +156,7 @@ void editarItem() {
             cin >> item.em_estoque;
             salvarDados();
             break;
-        case 4: {
-            cout << "Estoque atual: " << item.em_estoque << "\n";
-            
-            int quantidade;
-            cin >> quantidade;
-            
-            if(quantidade <= 0) {
-                cout << "Quantidade inválida!\n";
-                break;
-            }
-            
-            if(quantidade > item.em_estoque) {
-                cout << "Estoque insuficiente! Apenas " << item.em_estoque << " unidades disponíveis.\n";
-                break;
-            }
-            
-            cout << "Novo estoque: " << item.em_estoque << "\n";
-            salvarDados();
-            break;
-        }
+        
         default:
             cout << "Opção inválida!\n";
     }
@@ -184,22 +164,49 @@ void editarItem() {
 
 void adicionarItem() {
     Item novoItem;
+    
     cout << "\nADICIONAR NOVO ITEM\n";
     
-    cout << "Descrição: ";
-    cin.ignore();
-    getline(cin, novoItem.descricao);
+    do {
+        cout << "Descrição: ";
+        cin.ignore();
+        getline(cin, novoItem.descricao);
+        
+        if(novoItem.descricao.empty()) {
+            cout << "Erro: Descrição não pode ser vazia!\n";
+        }
+    } while(novoItem.descricao.empty());
     
-    cout << "Preço: R$ ";
-    cin >> novoItem.preco;
+    do {
+        cout << "Preço: R$ ";
+        cin >> novoItem.preco;
+        
+        if(cin.fail() || novoItem.preco <= 0) {
+            cin.clear();
+            cin.ignore(10000, '\n');
+            cout << "Erro: Digite um valor positivo!\n";
+        } else {
+            break;
+        }
+    } while(true);
     
-    cout << "Quantidade em estoque: ";
-    cin >> novoItem.em_estoque;
+    do {
+        cout << "Quantidade em estoque: ";
+        cin >> novoItem.em_estoque;
+        
+        if(cin.fail() || novoItem.em_estoque < 0) {
+            cin.clear();
+            cin.ignore(10000, '\n');
+            cout << "Erro: Estoque não pode ser negativo!\n";
+        } else {
+            break;
+        }
+    } while(true);
     
-    cout << "Item adicionado com sucesso!\n";
+    itens.push_back(novoItem);
     salvarDados();
+    cout << "Item adicionado com sucesso!\n";
 }
-
 void removerItem() {
     if (itens.empty()) {
         cout << "O inventário está vazio!\n";
@@ -234,7 +241,6 @@ void removerItem() {
         cout << "Operação cancelada.\n";
     }
 }
-
 int main() {
     setlocale(LC_ALL, "portuguese");
     
@@ -264,8 +270,8 @@ int main() {
                 adicionarItem();
                 break;
             case 4:
-                removerItem();
-                break;
+            	removerItem();
+            	break;
             case 9:
                 resetarInventario();
                 break;
@@ -279,5 +285,7 @@ int main() {
         cout << "\nPressione Enter para continuar...";
         cin.ignore();
         cin.get();
+        
+        system("cls");
     }
 }
