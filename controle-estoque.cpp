@@ -112,8 +112,9 @@ void mostrarInventario() {
         cout << setw(2) << i+1 << " | " 
              << setw(16) << left << itens[i].descricao << " | "
              << setw(6) << right << fixed << setprecision(2) << itens[i].preco << " | "
-             << setw(7) << itens[i].em_estoque << " | ";
-    }
+             << setw(7) << itens[i].em_estoque << " | "
+    		 << "\n";
+	}
 }
 
 void editarItem() {
@@ -199,6 +200,40 @@ void adicionarItem() {
     salvarDados();
 }
 
+void removerItem() {
+    if (itens.empty()) {
+        cout << "O inventário está vazio!\n";
+        return;
+    }
+
+    mostrarInventario();
+    cout << "\nDigite o ID do item para remover (0 para cancelar): ";
+    int id;
+    cin >> id;
+    
+    if (id == 0) return;
+    if (id < 1 || id > static_cast<int>(itens.size())) {
+        cout << "ID inválido!\n";
+        return;
+    }
+    
+    cout << "\nItem a ser removido:\n";
+    cout << "Descrição: " << itens[id-1].descricao << "\n";
+    cout << "Preço: R$ " << fixed << setprecision(2) << itens[id-1].preco << "\n";
+    cout << "Estoque: " << itens[id-1].em_estoque << "\n";
+    
+    cout << "\nTEM CERTEZA QUE DESEJA REMOVER ESTE ITEM? (S/N): ";
+    char confirmacao;
+    cin >> confirmacao;
+    
+    if (toupper(confirmacao) == 'S') {
+        itens.erase(itens.begin() + (id-1));
+        salvarDados();
+        cout << "Item removido com sucesso!\n";
+    } else {
+        cout << "Operação cancelada.\n";
+    }
+}
 
 int main() {
     setlocale(LC_ALL, "portuguese");
@@ -229,8 +264,9 @@ int main() {
                 adicionarItem();
                 break;
             case 4:
-            	cout << "remover item";
-            case 5:
+                removerItem();
+                break;
+            case 9:
                 resetarInventario();
                 break;
             case 0:
