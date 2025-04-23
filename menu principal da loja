@@ -89,7 +89,7 @@ int main() {
     int opcao;
     
     do {
-        cout << "=== SISTEMA DE OPERADORES ===" << endl;
+        cout << "=== ACESSO AO SISTEMA ===" << endl;
         cout << "1 - Entrar no sistema" << endl;
         cout << "0 - Sair" << endl;
         cout << "Escolha uma opcao: ";
