@@ -5,6 +5,7 @@
 #include <sstream>
 #include <locale>
 #include <fstream>
+#include <windows.h>
 
 using namespace std;
 
@@ -22,10 +23,11 @@ const char* ESTOQUE_DO_MERCADO = "inventario.dat";
 void carregarDados();
 void salvarDados();
 void inicializarInventario();
+void resetarInventario();
 void mostrarInventario();
 void editarItem();
 void adicionarItem();
-void resetarInventario();
+void removerItem ();
 
 void carregarDados() {
     ifstream arquivo(ESTOQUE_DO_MERCADO, ios::binary);
