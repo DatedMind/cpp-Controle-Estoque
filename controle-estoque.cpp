@@ -5,7 +5,6 @@
 #include <sstream>
 #include <locale>
 #include <fstream>
-#include <windows.h>
 
 using namespace std;
 
@@ -18,7 +17,7 @@ struct Item {
 };
 
 vector<Item> itens;
-const char* ARQUIVO_DADOS = "inventario.dat";
+const char* ESTOQUE_DO_MERCADO = "inventario.dat";
 
 void carregarDados();
 void salvarDados();
@@ -29,7 +28,7 @@ void adicionarItem();
 void resetarInventario();
 
 void carregarDados() {
-    ifstream arquivo(ARQUIVO_DADOS, ios::binary);
+    ifstream arquivo(ESTOQUE_DO_MERCADO, ios::binary);
     
     if(!arquivo) {
         cout << "Arquivo de dados não encontrado.\n";
@@ -59,7 +58,7 @@ void carregarDados() {
 }
 
 void salvarDados() {
-    ofstream arquivo(ARQUIVO_DADOS, ios::binary);
+    ofstream arquivo(ESTOQUE_DO_MERCADO, ios::binary);
     
     if(!arquivo) {
         cerr << "Erro ao criar arquivo de dados!\n";
@@ -82,6 +81,7 @@ void salvarDados() {
 
 void inicializarInventario() {
     itens.clear();
+    
     salvarDados();
     cout << "Inventário inicializado com 0 itens padrão.\n";
 }
@@ -288,4 +288,5 @@ int main() {
         
         system("cls");
     }
+
 }
