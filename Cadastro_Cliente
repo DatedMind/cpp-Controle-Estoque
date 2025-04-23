@@ -1,0 +1,68 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+const char *ARQUIVO_USUARIOS = "usuarios.dat";
+
+class menuAcesso {
+private:
+	
+struct Cadastro {
+		double cpf;
+		double rg;
+		string email;
+		double whatssap;
+		
+		Cadastro() : cpf(0.0), rg(0.0), email(""), whatssap(0.0) {}
+	};
+	
+	vector<Cadastro> login;
+	 
+public:
+		
+	void acesso() {
+        Cadastro novoCadastro;
+        
+        cout << "Digite seu CPF: ";
+        cin >> novoCadastro.cpf;
+        
+        cout << "Digite seu RG: ";
+        cin >> novoCadastro.rg;
+        
+        cout << "Digite seu e-mail: ";
+        cin >> novoCadastro.email;
+        
+        cout << "Digite seu WhatsApp: ";
+        cin >> novoCadastro.whatssap;
+        
+        login.push_back(novoCadastro);
+    }
+	
+};
+
+
+
+int main() {
+    menuAcesso sistema;
+    char opcao;
+    
+    do {
+        cout << "\nSistema de Cadastro\n";
+        cout << "1. Novo cadastro\n";
+        cout << "0. Sair\n";
+        cout << "Opcao: ";
+        cin >> opcao;
+        
+        switch(opcao) {
+            case '1':
+                sistema.acesso();
+                break;
+            case '0':
+                cout << "Saindo...\n";
+                break;
+            default:
+                cout << "Opcao invalida!\n";
+        }
+    } while(opcao != '0');
+}
