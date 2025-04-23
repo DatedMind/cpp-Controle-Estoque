@@ -2,7 +2,6 @@
 #include <vector>
 #include <string>
 #include <iomanip>  
-#include <sstream>
 #include <locale>
 #include <fstream>
 #include <windows.h>
@@ -113,8 +112,7 @@ void mostrarInventario() {
         cout << setw(2) << i+1 << " | " 
              << setw(16) << left << itens[i].descricao << " | "
              << setw(6) << right << fixed << setprecision(2) << itens[i].preco << " | "
-             << setw(7) << itens[i].em_estoque << " | "
-             << "\n";
+             << setw(7) << itens[i].em_estoque << " | " << "\n";
     }
 }
 
@@ -135,7 +133,6 @@ void editarItem() {
     cout << "1. Descrição: " << item.descricao << "\n";
     cout << "2. Preço: R$ " << item.preco << "\n";
     cout << "3. Estoque: " << item.em_estoque << "\n";
-    cout << "4. Registrar venda\n";
     cout << "O que deseja alterar? ";
     
     int opcao;
