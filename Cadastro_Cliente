@@ -1,5 +1,8 @@
 #include <iostream>
 #include <vector>
+#include <fstream>
+#include <string>
+#include <cstdlib>
 
 using namespace std;
 
@@ -7,41 +10,122 @@ const char *ARQUIVO_USUARIOS = "usuarios.dat";
 
 class menuAcesso {
 private:
-	
-struct Cadastro {
-		double cpf;
-		double rg;
-		string email;
-		double whatssap;
-		
-		Cadastro() : cpf(0.0), rg(0.0), email(""), whatssap(0.0) {}
-	};
-	
-	vector<Cadastro> login;
-	 
+    struct Cadastro {
+        string cpf;    // Alterado para string
+        string rg;     // Alterado para string
+        string email;
+        string whatsapp; // Alterado para string
+        
+        Cadastro() : cpf(""), rg(""), email(""), whatsapp("") {}
+    };
+    
+    vector<Cadastro> login;
+    
+    void adicionarUsuariosPadrao() {
+        Cadastro usuarios[] = {};
+        
+        for(size_t i = 0; i < sizeof(usuarios)/sizeof(usuarios[0]); ++i) {
+            login.push_back(usuarios[i]);
+        }
+    }
+    
+    // Função auxiliar para validar entrada numérica
+    bool ehNumerico(const string& str) {
+        for(size_t i = 0; i < str.size(); ++i) {
+            if(!isdigit(str[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
 public:
-		
-	void acesso() {
+    menuAcesso() {
+        carregarUsuarios();
+        if(login.empty()) {
+            adicionarUsuariosPadrao();
+            salvarUsuarios();
+        }
+    }
+    
+    void carregarUsuarios() {
+        ifstream arquivo(ARQUIVO_USUARIOS);
+        if(!arquivo) return;
+        
+        Cadastro temp;
+        while(getline(arquivo, temp.cpf)) {
+            getline(arquivo, temp.rg);
+            getline(arquivo, temp.email);
+            getline(arquivo, temp.whatsapp);
+            login.push_back(temp);
+        }
+    }
+    
+    void salvarUsuarios() {
+        ofstream arquivo(ARQUIVO_USUARIOS);
+        if(!arquivo) {
+            cerr << "Erro ao abrir arquivo para escrita!\n";
+            return;
+        }
+        
+        for(size_t i = 0; i < login.size(); ++i) {
+            arquivo << login[i].cpf << "\n"
+                    << login[i].rg << "\n"
+                    << login[i].email << "\n"
+                    << login[i].whatsapp << "\n";
+        }
+    }
+    
+    void acesso() {
         Cadastro novoCadastro;
         
-        cout << "Digite seu CPF: ";
+        cout << "Digite seu CPF (apenas números): ";
         cin >> novoCadastro.cpf;
+        while(!ehNumerico(novoCadastro.cpf) || novoCadastro.cpf.size() != 11) {
+            cout << "CPF inválido! Deve conter 11 dígitos.\n";
+            cout << "Digite seu CPF novamente: ";
+            cin >> novoCadastro.cpf;
+        }
         
-        cout << "Digite seu RG: ";
+        cout << "Digite seu RG (apenas números): ";
         cin >> novoCadastro.rg;
+        while(!ehNumerico(novoCadastro.rg)) {
+            cout << "RG inválido! Deve conter apenas números.\n";
+            cout << "Digite seu RG novamente: ";
+            cin >> novoCadastro.rg;
+        }
         
         cout << "Digite seu e-mail: ";
         cin >> novoCadastro.email;
         
-        cout << "Digite seu WhatsApp: ";
-        cin >> novoCadastro.whatssap;
+        cout << "Digite seu WhatsApp (apenas números com DDD): ";
+        cin >> novoCadastro.whatsapp;
+        while(!ehNumerico(novoCadastro.whatsapp) || novoCadastro.whatsapp.size() < 10) {
+            cout << "WhatsApp inválido! Deve conter apenas números com DDD.\n";
+            cout << "Digite seu WhatsApp novamente: ";
+            cin >> novoCadastro.whatsapp;
+        }
         
         login.push_back(novoCadastro);
+        salvarUsuarios();
+        cout << "Cadastro realizado com sucesso!\n";
     }
-	
+    
+    void listarUsuarios() {
+        system("cls || clear");
+        cout << "\nLISTA DE USUÁRIOS CADASTRADOS:\n";
+        cout << "--------------------------------------------------\n";
+        cout << "CPF\t\tRG\t\tE-MAIL\t\tWHATSAPP\n";
+        cout << "--------------------------------------------------\n";
+        
+        for(size_t i = 0; i < login.size(); ++i) {
+            cout << login[i].cpf << "\t"
+                 << login[i].rg << "\t"
+                 << login[i].email << "\t"
+                 << login[i].whatsapp << "\n";
+        }
+    }
 };
-
-
 
 int main() {
     menuAcesso sistema;
@@ -50,6 +134,7 @@ int main() {
     do {
         cout << "\nSistema de Cadastro\n";
         cout << "1. Novo cadastro\n";
+        cout << "2. Listar usuarios\n";
         cout << "0. Sair\n";
         cout << "Opcao: ";
         cin >> opcao;
@@ -58,11 +143,21 @@ int main() {
             case '1':
                 sistema.acesso();
                 break;
+            case '2':
+                sistema.listarUsuarios();
+                break;
             case '0':
                 cout << "Saindo...\n";
                 break;
             default:
                 cout << "Opcao invalida!\n";
         }
+        
+        cout << "\nPressione Enter para continuar...";
+        cin.ignore();
+        cin.get();
+        
     } while(opcao != '0');
+    
+    return 0;
 }
