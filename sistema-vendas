@@ -1,0 +1,224 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <iomanip>  
+#include <locale>
+#include <fstream>
+#include <windows.h>
+
+using namespace std;
+
+struct Item {
+    string descricao;
+    double preco;
+    int em_estoque;
+    
+    Item() : descricao(""), preco(0.0), em_estoque(0) {}
+};
+
+vector<Item> itens;
+const char* ESTOQUE_DO_MERCADO = "inventario.dat";
+
+// Protótipos de funções
+void carregarDados();
+void salvarEstoque();
+void mostrarMenu();
+void listarProdutos();
+void processarVenda();
+void mostrarRelatorio();
+
+int main() {
+    SetConsoleOutputCP(CP_UTF8); // Para caracteres especiais no Windows
+    carregarDados();
+    
+    int opcao;
+    do {
+        mostrarMenu();
+        cin >> opcao;
+        cin.ignore(); // Limpar buffer
+        
+        switch(opcao) {
+            case 1:
+                listarProdutos();
+                break;
+            case 2:
+                processarVenda();
+                break;
+            case 3:
+                mostrarRelatorio();
+                break;
+            case 4:
+                cout << "Saindo do sistema...\n";
+                break;
+            default:
+                cout << "Opção inválida!\n";
+        }
+    } while(opcao != 4);
+    
+    salvarEstoque();
+    return 0;
+}
+
+void carregarDados() {
+    ifstream arquivo(ESTOQUE_DO_MERCADO, ios::binary);
+    
+    if(!arquivo) {
+        cout << "Arquivo de dados não encontrado.\n";
+        return;
+    }
+    
+    size_t tamanho;
+    arquivo.read(reinterpret_cast<char*>(&tamanho), sizeof(tamanho));
+    
+    itens.resize(tamanho);
+    
+    for(size_t i = 0; i < tamanho; i++) {
+        size_t desc_tamanho;
+        arquivo.read(reinterpret_cast<char*>(&desc_tamanho), sizeof(desc_tamanho));
+        
+        char* buffer = new char[desc_tamanho + 1];
+        arquivo.read(buffer, desc_tamanho);
+        buffer[desc_tamanho] = '\0';
+        itens[i].descricao = string(buffer);
+        delete[] buffer;
+        
+        arquivo.read(reinterpret_cast<char*>(&itens[i].preco), sizeof(itens[i].preco));
+        arquivo.read(reinterpret_cast<char*>(&itens[i].em_estoque), sizeof(itens[i].em_estoque));
+    }
+    
+    cout << "Inventário carregado com " << itens.size() << " itens.\n";
+}
+
+
+void salvarEstoque() {
+    ofstream arquivo(ESTOQUE_DO_MERCADO, ios::binary);
+    if(!arquivo) {
+        cerr << "Erro ao salvar estoque!\n";
+        return;
+    }
+    
+    for(size_t i = 0; i < itens.size(); ++i) {
+        arquivo.write((const char*)&itens[i], sizeof(Item));
+    }
+    
+    arquivo.close();
+    cout << "Estoque salvo com sucesso!\n";
+}
+
+void mostrarMenu() {
+    cout << "\n=== SISTEMA DE VENDAS ===\n"
+         << "1. Listar produtos\n"
+         << "2. Realizar venda\n"
+         << "3. Relatório de estoque\n"
+         << "4. Sair\n"
+         << "Escolha uma opção: ";
+}
+
+void listarProdutos() {
+    cout << "\n=== PRODUTOS DISPONÍVEIS ===\n";
+    cout << setw(5) << "Cód." << setw(30) << "Descrição" 
+         << setw(10) << "Preço" << setw(10) << "Estoque\n";
+    
+    for(size_t i = 0; i < itens.size(); ++i) {
+        cout << setw(5) << i+1 << setw(30) << itens[i].descricao 
+             << setw(10) << fixed << setprecision(2) << itens[i].preco
+             << setw(10) << itens[i].em_estoque << "\n";
+    }
+}
+
+void processarVenda() {
+    listarProdutos();
+    
+    int codigo, quantidade;
+    double totalVenda = 0.0;
+    vector<pair<int, int> > itensVendidos; // <índice, quantidade>
+    
+    cout << "\nDigite o código do produto (0 para finalizar): ";
+    while(cin >> codigo && codigo != 0) {
+        if(codigo < 1 || codigo > static_cast<int>(itens.size())) {
+            cout << "Código inválido!\n";
+            continue;
+        }
+        
+        int indice = codigo - 1;
+        cout << "Produto selecionado: " << itens[indice].descricao << "\n";
+        cout << "Quantidade disponível: " << itens[indice].em_estoque << "\n";
+        cout << "Quantidade desejada: ";
+        cin >> quantidade;
+        
+        if(quantidade <= 0) {
+            cout << "Quantidade inválida!\n";
+            continue;
+        }
+        
+        if(quantidade > itens[indice].em_estoque) {
+            cout << "Estoque insuficiente!\n";
+            continue;
+        }
+        
+        itensVendidos.push_back(make_pair(indice, quantidade));
+        totalVenda += itens[indice].preco * quantidade;
+        
+        cout << "Adicionado ao carrinho. Total parcial: R$" 
+             << fixed << setprecision(2) << totalVenda << "\n";
+        cout << "\nPróximo produto (0 para finalizar): ";
+    }
+    
+    if(itensVendidos.empty()) {
+        cout << "Nenhum item vendido.\n";
+        return;
+    }
+    
+    // Confirmar venda
+    cout << "\n=== RESUMO DA VENDA ===\n";
+    cout << setw(30) << "Produto" << setw(10) << "Qtd" 
+         << setw(10) << "Preço" << setw(12) << "Subtotal\n";
+    
+    for(size_t i = 0; i < itensVendidos.size(); ++i) {
+        int idx = itensVendidos[i].first;
+        int qtd = itensVendidos[i].second;
+        double subtotal = itens[idx].preco * qtd;
+        
+        cout << setw(30) << itens[idx].descricao 
+             << setw(10) << qtd
+             << setw(10) << fixed << setprecision(2) << itens[idx].preco
+             << setw(12) << subtotal << "\n";
+    }
+    
+    cout << "\nTOTAL DA VENDA: R$" << fixed << setprecision(2) << totalVenda << "\n";
+    
+    char confirmar;
+    cout << "Confirmar venda (S/N)? ";
+    cin >> confirmar;
+    
+    if(toupper(confirmar) == 'S') {
+        // Atualizar estoque
+        for(size_t i = 0; i < itensVendidos.size(); ++i) {
+            int idx = itensVendidos[i].first;
+            int qtd = itensVendidos[i].second;
+            itens[idx].em_estoque -= qtd;
+        }
+        cout << "Venda registrada com sucesso!\n";
+        salvarEstoque();
+    } else {
+        cout << "Venda cancelada.\n";
+    }
+}
+
+void mostrarRelatorio() {
+    cout << "\n=== RELATÓRIO DE ESTOQUE ===\n";
+    cout << setw(5) << "Cód." << setw(30) << "Descrição" 
+         << setw(10) << "Preço" << setw(10) << "Estoque\n";
+    
+    double valorTotal = 0.0;
+    
+    for(size_t i = 0; i < itens.size(); ++i) {
+        cout << setw(5) << i+1 << setw(30) << itens[i].descricao 
+             << setw(10) << fixed << setprecision(2) << itens[i].preco
+             << setw(10) << itens[i].em_estoque << "\n";
+             
+        valorTotal += itens[i].preco * itens[i].em_estoque;
+    }
+    
+    cout << "\nVALOR TOTAL EM ESTOQUE: R$" << fixed << setprecision(2) << valorTotal << "\n";
+}
